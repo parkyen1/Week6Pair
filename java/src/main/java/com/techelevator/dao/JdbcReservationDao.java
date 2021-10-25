@@ -7,7 +7,9 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class JdbcReservationDao implements ReservationDao {
 
@@ -45,6 +47,25 @@ public class JdbcReservationDao implements ReservationDao {
         return -1;
     }
 
+
+    // A reservation includes a reservation ID, site ID, name, start date, end date, and date created.
+    public List<Reservation> getAvailableSitesDateRange(int parkId) {
+
+        List<Reservation> upcomingReservation = new ArrayList<>();
+        String sql = "SELECT r.reservation_id, s.site_id, r.name, from_date, to_date, create_date "
+                + "FROM reservation r " +
+                "JOIN site s ON s.site_id = r.site_id " +
+                "JOIN campground c ON c.campground_id = s.campground_id " +
+                "JOIN park p ON c.park_id = p.park_id " +
+                "WHERE p.park_id = ? AND r.from_date <= '2021-10-24' AND r.from_date <= '2021-11-22';";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, parkId);
+        while (results.next()) {
+            upcomingReservation.add(mapRowToReservation(results));
+        }
+        return upcomingReservation;
+    }
+
+
     private Reservation mapRowToReservation(SqlRowSet results) {
         Reservation r = new Reservation();
         r.setReservationId(results.getInt("reservation_id"));
@@ -55,6 +76,5 @@ public class JdbcReservationDao implements ReservationDao {
         r.setCreateDate(results.getDate("create_date").toLocalDate());
         return r;
     }
-
 
 }
